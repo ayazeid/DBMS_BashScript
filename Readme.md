@@ -1,38 +1,38 @@
-# Project Title:
+## Project Title:
 
-### Database Management System
-
-
-
-# Project Description:
-
-### Database Management System project For ITI-Full Stack Web Development Using Python track
-
-# Language:
-
-### Bash Shell Scripting language
+#### Database Management System
 
 
 
+## Project Description:
 
-# Developers:
+#### Database Management System project For ITI-Full Stack Web Development Using Python track
 
-### 1- Aya Maged Mohamed Ibrahem [@AyaMaged](https://github.com/ayazeid)
+## Language:
 
-### 2- Ahmed Mahmoud Saleh Ibrahem [@AhmedMahmoud](https://github.com/ahmedsaleh1998)
+#### Bash Shell Scripting language
 
 
 
 
-# Instructions:
+## Developers:
 
-### To start using this dbms we highly recommend the following
+#### 1- Aya Maged Mohamed Ibrahem [@AyaMaged](https://github.com/ayazeid)
 
-### 1- Clone this repository using
+#### 2- Ahmed Mahmoud Saleh Ibrahem [@AhmedMahmoud](https://github.com/ahmedsaleh1998)
+
+
+
+
+## Instructions:
+
+#### To start using this dbms we highly recommend the following
+
+#### 1- Clone this repository using
 
 git clone https://github.com/ayazeid/DBMS_BashScript.git
 
-### 2- Add the cloned directory to your environment path
+#### 2- Add the cloned directory to your environment path
 
 Temporary --> PATH=$PATH:<directory-absolute-path>
 Permanently --> in ~/.bash_profile or in ~/.bashrc 
@@ -40,6 +40,6 @@ add at the end of the file
 PATH=$PATH:<directory-absolute-path>
 then save the file
 
-### 3- Run the script in your bash shell terminal with
+#### 3- Run the script in your bash shell terminal with
 
 . dbms.sh
