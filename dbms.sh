@@ -1,7 +1,7 @@
 #!/bin/bash
 
 
-######## Assisting Variables #############
+######## Assisting functions  #############
 line () {
 	echo "------------------------------------------------"
 }
@@ -21,6 +21,16 @@ int_check () {
 	else return 1
 	fi
 }
+
+pk_check () {
+	for p in `cut -f1 -d'|' $2`
+	do
+		if [ $p -eq $1 ]
+		then
+			return 1
+		fi
+	done    }
+
 ######## Intro Functions    ##############
 # Welcome intro
 welcome_intro () {
@@ -55,33 +65,66 @@ createtable () {
 				# //to read data from user///
 				while [ $counter -lt $numberofcolumn ]
 				do
+					if [ $((counter+1)) == 1 ] 
+					then 
+						echo "Please enter name to column number $((counter+1)) ( Primary key ) "
+						read val
+						if input_check $val;
+						then
+							columnnames[counter]=$val
+							#       echo  ${columnnames[$counter]}
 
-					echo "Please enter name to column number $((counter+1)) "
-					read val
-					if input_check $val;
-					then
-						columnnames[counter]=$val
-						#	echo  ${columnnames[$counter]}
+							echo "Please enter data type to column  number $((counter+1))   ( ${columnnames[$counter]} ) "
+							select d in int string
+							do
+								case $REPLY in
 
-						echo "Please enter data type to column  number $((counter+1))   ( ${columnnames[$counter]} ) "
-						select d in int string
-						do
-							case $REPLY in
+									1) columnprivlages[$counter]="int"
+										break;;
+									2) columnprivlages[$counter]="string"
+										break;;
+									*) echo "Wrong awnser"
+										createtable
 
-								1) columnprivlages[$counter]="int"
-									break;;
-								2) columnprivlages[$counter]="string"
-									break;;
-								*) echo "Wrong awnser"
-									createtable
-
-								esac
-							done
+									esac
+								done
 
 
-							let counter=$counter+1
-						else echo Invalid input, Please try again
-							counter=$counter
+								let counter=$counter+1
+							else echo Invalid input, Please try again
+								counter=$counter
+						fi
+
+					else
+
+
+						echo "Please enter name to column number $((counter+1)) "
+						read val
+						if input_check $val;
+						then
+							columnnames[counter]=$val
+							#	echo  ${columnnames[$counter]}
+
+							echo "Please enter data type to column  number $((counter+1))   ( ${columnnames[$counter]} ) "
+							select d in int string
+							do
+								case $REPLY in
+
+									1) columnprivlages[$counter]="int"
+										break;;
+									2) columnprivlages[$counter]="string"
+										break;;
+									*) echo "Wrong awnser"
+										createtable
+
+									esac
+								done
+
+
+								let counter=$counter+1
+							else echo Invalid input, Please try again
+								counter=$counter
+						fi
 					fi
 				done
 				#///// to make file and add data type  and columns name 
@@ -148,27 +191,58 @@ function insert_into_table {
 			dt=$(awk -v dt="$((counter+1))"  'BEGIN{FS="|";}{if (NR==2) print $dt}' metadata/metadata_$tablename)
 			col=$(awk -v col="$((counter+1))"  'BEGIN{FS="|";}{if (NR==3) print $col}' metadata/metadata_$tablename)
 
-			echo "Please enter $dt data type value to column $((counter+1)) ( $col )"
-			read val
-			if [ $dt == "int" ]
-			then
-				if int_check $val;
-				then
-					mydata[$counter]=$val
 
-					let counter=$counter+1
+
+			if [ $((counter+1)) == 1 ]
+			then
+
+
+				echo "Please enter $dt data type value to the Primary key  column $((counter+1)) ( $col )"
+				read val
+				if [ $dt == "int" ]
+				then
+					if int_check $val &&  pk_check $val $table;
+					then
+						mydata[$counter]=$val
+
+						let counter=$counter+1
+					else
+						echo Invaild input data type or primary key exist, please try again with uniuqe new value
+						counter=$counter
+					fi
 				else
-					echo Invaild input data type, please try again
-					counter=$counter
+					if input_check $val -a pk_check $val $table;
+					then
+						mydata[$counter]=$val
+
+						let counter=$counter+1
+					else
+						counter=$counter
+					fi
 				fi
 			else
-				if input_check $val;
+				echo "Please enter $dt data type value to column $((counter+1)) ( $col )"
+				read val
+				if [ $dt == "int" ]
 				then
-					mydata[$counter]=$val
+					if int_check $val;
+					then
+						mydata[$counter]=$val
 
-					let counter=$counter+1
+						let counter=$counter+1
+					else
+						echo Invaild input data type, please try again
+						counter=$counter
+					fi
 				else
-					counter=$counter
+					if input_check $val;
+					then
+						mydata[$counter]=$val
+
+						let counter=$counter+1
+					else
+						counter=$counter
+					fi
 				fi
 			fi
 
