@@ -346,14 +346,14 @@ select_table () {
 	then
 		if [[ -f $table ]]
 		then
-			head=$(awk  'BEGIN{FS="|";}{if (NR==3) print $0}' metadata/metadata_$table)
+			head=$(awk  'BEGIN{FS="|";}{if (NR==3) print $0}' metadata/metadata_$table |column -t -s"|")
 			select c in "Type 1 Select all table" "Type 2 Select a record" "Type r to return or e to exit"
 			do
 				case $REPLY in
 					1) echo --------------------
 						echo $head
 						echo --------------------
-						awk 'BEGIN{FS="|";OFS="      |";} {print $0}' $table
+						awk 'BEGIN{FS="|";} {print $0}' $table |column -t -s"|"
 						echo "Type r to return or e to exit"
 
 						;;
@@ -364,7 +364,7 @@ select_table () {
 							echo --------------------
 							echo $head
 							echo -------------------
-							awk 'BEGIN{FS="|";} {print $0}' $table|grep ^$pk
+							awk 'BEGIN{FS="|";} {print $0}' $table|grep ^$pk |column -t -s"|"
 							echo "Type r to return or e to exit"
 						else
 							echo "Nothing was inserted"
