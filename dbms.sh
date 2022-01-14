@@ -346,16 +346,24 @@ select_table () {
 	then
 		if [[ -f $table ]]
 		then
+			head=$(awk  'BEGIN{FS="|";}{if (NR==3) print $0}' metadata/metadata_$table)
 			select c in "Type 1 Select all table" "Type 2 Select a record" "Type r to return or e to exit"
 			do
 				case $REPLY in
-					1) awk 'BEGIN{FS="|";} {print $0}' $table
+					1) echo --------------------
+						echo $head
+						echo --------------------
+						awk 'BEGIN{FS="|";OFS="      |";} {print $0}' $table
 						echo "Type r to return or e to exit"
+
 						;;
 					2) echo please insert the value of primary key
 						read pk
 						if [[ $pk != "" ]]
 						then
+							echo --------------------
+							echo $head
+							echo -------------------
 							awk 'BEGIN{FS="|";} {print $0}' $table|grep ^$pk
 							echo "Type r to return or e to exit"
 						else
