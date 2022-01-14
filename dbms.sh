@@ -206,7 +206,7 @@ function insert_into_table {
 
 				echo "Please enter $dt data type value to the Primary key  column $((counter+1)) ( $col )"
 				read val
-				pk=$(grep -q $val $table; echo $?)
+				pk=$(awk 'BEGIN{FS="|";} {print $1}' $table|grep -q -x $val; echo $?)
 				if [ $dt == "int" ]
 				then
 					#pk=grep $val $table;
