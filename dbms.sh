@@ -23,13 +23,21 @@ int_check () {
 }
 
 pk_check () {
-	for p in `cut -f1 -d'|' $2`
-	do
-		if [ $p -eq $1 ]
-		then
-			return 1
-		fi
-	done    }
+	#for p in `cut -f1 -d'|' $2`
+	#do
+	#	if [ $p -eq $1 ]
+	#	then
+	#		return 1
+	#	fi
+	#done
+	if `grep -q $1 $2`
+	then
+		echo flase
+		return 1
+	else echo true
+		return 0
+	fi
+}
 
 ######## Intro Functions    ##############
 # Welcome intro
@@ -196,27 +204,43 @@ function insert_into_table {
 			if [ $((counter+1)) == 1 ]
 			then
 
-
 				echo "Please enter $dt data type value to the Primary key  column $((counter+1)) ( $col )"
 				read val
+				pk=$(grep -q $val $table; echo $?)
 				if [ $dt == "int" ]
 				then
-					if int_check $val &&  pk_check $val $table;
+					#pk=grep $val $table;
+					if int_check $val;
 					then
-						mydata[$counter]=$val
-
-						let counter=$counter+1
+						if [ $pk == 1 ]
+						then
+							echo $pk
+							mydata[$counter]=$val
+							let     counter=$counter+1
+						else echo Primary key exist, please try again with unique new value
+							counter=$counter
+						fi
+						#	mydata[$counter]=$val
+						#	let	counter=$counter+1
 					else
-						echo Invaild input data type or primary key exist, please try again with uniuqe new value
+						echo Invaild input data type, please try again
 						counter=$counter
 					fi
 				else
-					if input_check $val -a pk_check $val $table;
+					if input_check $val;
 					then
-						mydata[$counter]=$val
+						if [ $pk == 1 ]
+						then 
+							echo $pk
 
-						let counter=$counter+1
+							mydata[$counter]=$val
+
+							let counter=$counter+1
+						else echo Primary key exist, please try again with uniqe new value
+							counter=$counter
+						fi
 					else
+						echo Invalid input, please try again
 						counter=$counter
 					fi
 				fi
