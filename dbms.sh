@@ -6,7 +6,21 @@ line () {
 	echo "------------------------------------------------"
 }
 
+input_check () {
+	if [ $# -eq 1 -a -n "$1" ]
+	then
+		return 0
+	else
+		return 1
+	fi
+}
 
+int_check () {
+	if [[ $1 =~ ^[+-]?[0-9]+$ ]]; then
+		return 0
+	else return 1
+	fi
+}
 ######## Intro Functions    ##############
 # Welcome intro
 welcome_intro () {
@@ -18,75 +32,89 @@ welcome_intro () {
 #/////create table//////
 
 createtable () {
-	echo "enter table name :"
+	line
+	echo "Please enter table name :"
 	read tablename
+	if input_check $tablename;
+	then 
+		if [[ -f $tablename ]]
+		then
+			echo "Table already existed ,please choose another name"
+			createtable
+		else
+			#typeset -i numberofcolumn
+			echo "Please enter number of column "
+			read numberofcolumn
+			if int_check $numberofcolumn;
+			then 
+				#echo $((numberofcolumn * numberofcolumn)) 
+
+				typeset columnnames[$numberofcolumn]
+				typeset columnprivlages[$numberofcolumn]
+				counter=0
+				# //to read data from user///
+				while [ $counter -lt $numberofcolumn ]
+				do
+
+					echo "Please enter name to column number $((counter+1)) "
+					read val
+					if input_check $val;
+					then
+						columnnames[counter]=$val
+						#	echo  ${columnnames[$counter]}
+
+						echo "Please enter data type to column  number $((counter+1))   ( ${columnnames[$counter]} ) "
+						select d in int string
+						do
+							case $REPLY in
+
+								1) columnprivlages[$counter]="int"
+									break;;
+								2) columnprivlages[$counter]="string"
+									break;;
+								*) echo "Wrong awnser"
+									createtable
+
+								esac
+							done
 
 
-	if [[ -f $tablename ]]
-	then
-		echo "table already existed ,choose another name"
+							let counter=$counter+1
+						else echo Invalid input, Please try again
+							counter=$counter
+					fi
+				done
+				#///// to make file and add data type  and columns name 
 
-	else
-		typeset -i numberofcolumn
-		echo "enter number of column "
-		read numberofcolumn
-		echo $((numberofcolumn * numberofcolumn)) 
+				datatype_row=""
+				columnname_row=""
+				counter=0
+				while [ $counter -lt $numberofcolumn ]
+				do
 
-		typeset columnnames[$numberofcolumn]
-		typeset columnprivlages[$numberofcolumn]
-		counter=0
-		# //to read data from user///
-		while [ $counter -lt $numberofcolumn ]
-		do
+					datatype_row=$datatype_row""${columnprivlages[$counter]}"|"
+					columnname_row=$columnname_row""${columnnames[$counter]}"|"
+					let counter=$counter+1
 
-			echo "enter column name to number $((counter+1)) "
-			read val
-			columnnames[counter]=$val
-			echo  ${columnnames[$counter]}
-
-			echo "enter data type to column  number $((counter+1)) "
-			select d in int string
-			do
-				case $REPLY in
-
-					1) columnprivlages[$counter]="int"
-						break;;
-					2) columnprivlages[$counter]="string"
-						break;;
-					*) echo "wrong awnser"
-						break;;
-
-					esac
 				done
 
 
-				let counter=$counter+1
+				touch $tablename
+				touch metadata/metadata_${tablename}
 
-			done
-			#///// to make file and add data type  and columns name 
+				echo $numberofcolumn>>metadata/metadata_$tablename
+				echo "$datatype_row">>metadata/metadata_$tablename
+				echo "$columnname_row">>metadata/metadata_$tablename
+				echo "Table $tablename created sucessfully"
+				table_screen
 
-			datatype_row=""
-			columnname_row=""
-			counter=0
-			while [ $counter -lt $numberofcolumn ]
-			do
-				datatype_row=$datatype_row""${columnprivlages[$counter]}"|"
-				columnname_row=$columnname_row""${columnnames[$counter]}"|"
-				let counter=$counter+1
-
-			done
-
-
-			touch $tablename
-			touch metadata/metadata_${tablename}
-
-			echo $numberofcolumn>>metadata/metadata_$tablename
-			echo "$datatype_row">>metadata/metadata_$tablename
-			echo "$columnname_row">>metadata/metadata_$tablename
-			echo "table created sucessfully"
-
+			else echo Invalid input, please try again
+				createtable
+			fi  
+		fi
+	else echo Invaild input, please try again
+		createtable
 	fi
-
 }
 
 
@@ -94,14 +122,15 @@ createtable () {
 #//// insert into table /////
 
 function insert_into_table {
-
-	echo "enter table name :"
+	line
+	echo "Please enter table name :"
 	read tablename
 	echo $tablename
 
 	if ! [[ -f $tablename ]]
 	then
-		echo "table not existed :("
+		echo "Table not existed, please try again"
+		insert_into_table
 	else
 		numberofcolumn=$(awk  'BEGIN{FS="|";}{if (NR==1) print $1}' metadata/metadata_$tablename)
 		counter=0
@@ -116,11 +145,32 @@ function insert_into_table {
 
 		do
 			column_names[$counter]=$(awk 'BEGIN{FS="|";}{if (NR==3) print $0}' metadata/metadata_$tablename)
-			echo "enter column value to column $((counter+1)) ${column_names[$counter]} "
-			read val
-			mydata[$counter]=$val
+			dt=$(awk -v dt="$((counter+1))"  'BEGIN{FS="|";}{if (NR==2) print $dt}' metadata/metadata_$tablename)
+			col=$(awk -v col="$((counter+1))"  'BEGIN{FS="|";}{if (NR==3) print $col}' metadata/metadata_$tablename)
 
-			let counter=$counter+1
+			echo "Please enter $dt data type value to column $((counter+1)) ( $col )"
+			read val
+			if [ $dt == "int" ]
+			then
+				if int_check $val;
+				then
+					mydata[$counter]=$val
+
+					let counter=$counter+1
+				else
+					echo Invaild input data type, please try again
+					counter=$counter
+				fi
+			else
+				if input_check $val;
+				then
+					mydata[$counter]=$val
+
+					let counter=$counter+1
+				else
+					counter=$counter
+				fi
+			fi
 
 		done
 
@@ -140,102 +190,88 @@ function insert_into_table {
 
 		echo "$column_row_values">>$tablename
 
-		echo "insertion done successfully :)"
+		echo "Insertion into $tablename done successfully"
 
 
+		table_screen
 	fi
 }
 # delete from table
 delete_from_table () {
-	if [[ $# -eq 0 ]]
-	then
-		echo "Nothing was selected"
-		line
-		table_screen
+	line
+	echo Please enter table name:
+	read table
 
-	elif [[ $# -eq 1 ]]
+	if input_check $table;
 	then
-		if [[ -f $1 ]]
+		if [[ -f $table ]]
 		then
-			table=$1
-			echo please insert the primary key value where the record will be deleted
+			echo Please insert the primary key value where the record will be deleted
 			read pk
 			if [[ $pk != "" ]]
 			then
 				sed -i -r "/^$pk/d" $table
 				echo Record deleted successfully
-				line
 				table_screen
 			else
 				echo "Nothing was inserted"
-				line
-				table_screen
+				delete_from_table
 			fi
 
 		else
-			echo "Table $1 doesn't exist"
-			line
-			table_screen
+			echo "Table $table doesn't exist"
+			delete_from_table
 		fi
 	else
 		echo Invaild input, please try again
-		line
-		table_screen
+		delete_from_table
 	fi
 }
 
 # drop table
 drop_table () {
-	if [[ $# -eq 0 ]]
-	then
-		echo "Nothing was selected"
-		line
-		table_screen
-	elif [[ $# -eq 1 ]]
+	line
+	echo Please enter table name:
+	read table
+	if input_check $table
 	then 
-		if [[ -f $1 ]]
+		if [[ -f $table ]]
 		then
-			table=$1
 			select c in "Are you sure you want to drop table $table ? Type 1 for YES 2 for NO" 
 			do
 				case $REPLY in
 					1) rm $table
 						echo $table was dropped successfully
-						line
 						table_screen
 						;;
 					2) table_screen;;
-					*) echo Sorry invaild select,try again 1 for YES or 2 for No
+					*) echo Sorry invaild select,try again
+						drop_table
 						;;
 				esac
 			done
 
 		else 
-			echo "Table $1 doesn't exist"
+			echo "Table $table doesn't exist"
 			line
-			table_screen
+			drop_table
 		fi
 	else 
-		echo Invaild input, please try again
-		line
-		table_screen
+		echo Invaild input, please try againe
+		drop_table
 	fi
 }
 
 
 # select from table
 select_table () {
-	if [[ $# -eq 0 ]]
+	line
+	echo Please enter table name:
+	read table
+	if input_check $table;
 	then
-		echo "Nothing was selected"
-		line
-		table_screen
-
-	elif [[ $# -eq 1 ]]
-	then
-		if [[ -f $1 ]]
+		if [[ -f $table ]]
 		then
-			table=$1
 			select c in "Type 1 Select all table" "Type 2 Select a record" "Type r to return or e to exit"
 			do
 				case $REPLY in
@@ -257,17 +293,16 @@ select_table () {
 					"r")table_screen;;
 					"e")exit;;
 					*) echo "Sorry not valid select, please select from above"
+						select_table
 						;;
 				esac
 			done
 		else
-			echo "Table $1 doesn't exist"
-			line
-			table_screen
+			echo "Table $table doesn't exist"
+			select_table
 		fi
 	else
 		echo Invaild input, please try again
-		line
 		table_screen
 	fi
 }
@@ -275,58 +310,67 @@ select_table () {
 #////list tables //////
 
 function list_all_tables {
-	ls -f
+	line
+	ls -p |grep -v /
+	table_screen
 }
 
 function update_table {
 
-
-	echo "enter table name :"
+	line
+	echo "Please enter table name :"
 	read tablename
-	echo $tablename
-
-	if ! [[ -f $tablename ]]
+	if input_check $table;
 	then
-		echo "table not existed :("
+
+		if ! [[ -f $tablename ]]
+		then
+			echo "Table does not existed, please try again"
+			update_table
+		else
+
+
+			select character in "Update all rows" "Update one row""Type r to return or e to exit"
+			do
+
+				case $REPLY in
+
+					1)	echo "Please enter old word"
+						read vale2
+						echo "Please enter new word"
+						read vale3
+						sed -i -r s/$vale2/$vale3/g $tablename
+						echo "Done ......"
+						;;
+					2)  echo "Please enter row number "
+						read vale
+						echo "Please enter old word"
+						read vale2
+						echo "Please enter new word"
+						read vale3
+
+
+						sed -i -r $((vale))s/$vale2/$vale3/  $tablename
+						echo "Done ......"
+
+						;;
+					"r")table_screen;;
+					"e")exit;;
+					*) echo "Invaild input, please try again"
+						update_table
+						;;
+
+
+					esac
+				done
+
+
+
+		fi
 	else
-
-
-		select character in "update all rows" "update one row"
-		do
-
-			case $REPLY in
-
-				1)	echo "enter old word"
-					read vale2
-					echo "enter new word"
-					read vale3
-					sed -i -r s/$vale2/$vale3/g $tablename
-					echo "done ......"
-					;;
-				2)  echo "enter row number "
-					read vale
-					echo "enter old word"
-					read vale2
-					echo "enter new word"
-					read vale3
-
-
-					sed -i -r $((vale))s/$vale2/$vale3/  $tablename
-					echo "done ......"
-
-					;;
-
-				*) echo "wrong chosse :(" ;;
-
-
-			esac
-		done
-
-
-
+		echo Invalid input, please try again
+		update_table
 	fi
-
-
 }
 
 
@@ -341,23 +385,18 @@ table_screen () {
 				;;
 			3) insert_into_table
 				;;
-			4) echo please enter table name:
-				read table
-				drop_table $table
+			4) drop_table
 				;;
-			5) echo Please enter table name:
-				read table
-				select_table $table
+			5) select_table
 				;;
-			6) echo Please enter table name:
-				read table
-				delete_from_table $table
+			6) delete_from_table
 				;;
 			7) list_all_tables
 				;;
 			"r") dbms_screen;;
 			"e")exit;;
 			*) echo Invalid input, please try again
+				table_screen
 				;;
 		esac
 	done
@@ -372,22 +411,23 @@ create_db () {
 	select c in "Please enter the new Database name:" "Type r to Return or e to Exit"
 	do
 		case $REPLY in
-			"") echo Nothing was inserted
-				;;
-			*\ *) echo Invalid input, Please try again
-				;;
 			"e") exit;;
 			"r") 	dbms_screen
 				;;
-			*)if ! [[ -d $REPLY ]]
+			*)if input_check $REPLY;
 			then
-				mkdir $REPLY
-				cd $REPLY; mkdir metadata; chmod +rwx metadata;
-				echo Created database $REPLY
-				echo Type r to Return or e to Exit
-			else
-				echo This name exist, please enter a new name
+				if ! [[ -d $REPLY ]]
+				then
+					mkdir $REPLY
+					cd $REPLY; mkdir metadata; chmod +rwx metadata;
+					echo Created database $REPLY
+					echo Type r to Return or e to Exit
+				else
+					echo This name exist, please enter a new name
 
+					create_db
+				fi
+			else echo Inavild input, please try again
 				create_db
 			fi
 
@@ -402,20 +442,21 @@ drop_db () {
 	select c in "Please enter the Database name:" "Type r to Return or e to Exit"
 	do      
 		case $REPLY in
-			"") echo Nothing was inserted
-				;;
-			*\ *) echo Invalid input, Please try again
-				;;
 			"e") exit;;
 			"r")    dbms_screen
 				;;
-			*)if [[ -d $REPLY ]]
-			then    
-				rm -r $REPLY
-				echo  Dropped database $REPLY 
-				echo  Type r to Return or e to Exit
-			else    
-				echo This database does not exist, please enter a database name
+			*)if input_check $REPLY;
+			then
+				if [[ -d $REPLY ]]
+				then    
+					rm -r $REPLY
+					echo  Dropped database $REPLY 
+					echo  Type r to Return or e to Exit
+				else    
+					echo This database does not exist, please enter a database name
+					drop_db
+				fi
+			else echo Invalid input, please try again
 				drop_db
 			fi
 
@@ -431,22 +472,23 @@ connect_db () {
 	select c in "Please enter the Database name:" "Type r to Return or e to Exit"
 	do
 		case $REPLY in
-			"") echo Nothing was inserted
-				;;
-			*\ *) echo Invalid input, Please try again
-				;;
 			"e") exit;;
 			"r")  dbms_screen
 				;;
-			*)if [[ -d $REPLY ]]
+			*)if input_check $REPLY;
 			then
-				cd $REPLY
-				echo  Connected to database $REPLY
-				echo `pwd`
-				table_screen
-				echo  Type r to Return or e to Exit
-			else
-				echo This database does not exist, please enter a database name
+				if [[ -d $REPLY ]]
+				then
+					cd $REPLY
+					echo  Connected to database $REPLY
+					echo `pwd`
+					table_screen
+					echo  Type r to Return or e to Exit
+				else
+					echo This database does not exist, please enter a database name
+					connect_db
+				fi
+			else echo Invalid input, please try again
 				connect_db
 			fi
 
@@ -475,26 +517,32 @@ list_dbs () {
 }
 
 db_screen () {
-	cd ~/dbms
-	pwd
-	select c in "Type 1 Create Database" "Type 2 Drop Database" "Type 3 Connect to Database" "Type 4 List Databases" "Type 5 Exit"
-	do
-		case $REPLY in
-			1) create_db
-				;;
-			2) drop_db
-				;;
-			3) connect_db
-				;;
-			4) list_dbs
-				;;
-			5) exit;;
-			*) echo Invaild input, please try again
-				;;
+	if [ -d ~/dbms ]
+	then
+		cd ~/dbms
+		pwd
+		select c in "Type 1 Create Database" "Type 2 Drop Database" "Type 3 Connect to Database" "Type 4 List Databases" "Type 5 Exit"
+		do
+			case $REPLY in
+				1) create_db
+					;;
+				2) drop_db
+					;;
+				3) connect_db
+					;;
+				4) list_dbs
+					;;
+				5) exit;;
+				*) echo Invaild input, please try again
+					;;
 
-			esac
-		done
-	}
+				esac
+			done
+		else
+			mkdir ~/dbms
+			db_screen
+	fi
+}
 
 
 ######## DBMS Calling ##############
@@ -502,7 +550,6 @@ dbms_screen () {
 	# intro screen
 	welcome_intro
 	db_screen
-	#	table_screen
 }
 dbms_screen
 
