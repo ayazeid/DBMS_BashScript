@@ -436,7 +436,7 @@ function update_table {
 		else
 
 
-			select character in "Update all rows" "Update one row""Type r to return or e to exit"
+			select character in "Update all rows" "Update one row" "Type r to return or e to exit"
 			do
 
 				case $REPLY in
@@ -458,7 +458,7 @@ function update_table {
 
 						sed -i -r $((vale))s/$vale2/$vale3/  $tablename
 						echo "Done ......"
-
+						table_screen
 						;;
 					"r")table_screen;;
 					"e")exit;;
