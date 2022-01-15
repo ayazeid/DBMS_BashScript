@@ -436,7 +436,7 @@ function update_table {
 		else
 
 
-			select character in "Update all rows" "Update one row" "Type r to return or e to exit"
+			select character in "Update in all records" "Update one record" "Type r to return or e to exit"
 			do
 
 				case $REPLY in
@@ -447,15 +447,16 @@ function update_table {
 						read vale3
 						sed -i -r s/$vale2/$vale3/g $tablename
 						echo "Done ......"
+						table_screen
 						;;
-					2)  echo "Please enter row number "
-						read vale
+					2)  echo "Please enter Primary key"
+						read key
 						echo "Please enter old word"
 						read vale2
 						echo "Please enter new word"
 						read vale3
 
-
+						vale=$(awk -v wrd="$key" 'BEGIN{FS="|";} $0~wrd{print NR}' $tablename)
 						sed -i -r $((vale))s/$vale2/$vale3/  $tablename
 						echo "Done ......"
 						table_screen
